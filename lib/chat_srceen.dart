@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:velocity_x/velocity_x.dart';
 import 'chatmessage.dart';
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({Key? key}) : super(key: key);
@@ -19,7 +20,8 @@ class _ChatScreenState extends State<ChatScreen> {
   // Api key - Please generate YOUR_API_KEY from here
   // https://platform.openai.com/account/api-keys
   // Replace with Your API-KEY
-  String apiKey = "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";
+  String? apiKey = dotenv.env['API'];
+  String? org = dotenv.env['ORG'];
   Future<void> _sendMessage() async {
     // Create  ChatMessage Class object and pass the user input
     ChatMessage message = ChatMessage(text: _controller.text, sender: "You");
@@ -44,10 +46,10 @@ class _ChatScreenState extends State<ChatScreen> {
     // Here we have to create body based on the document
     try {
       Map<String, dynamic> requestBody = {
-        "model": "text-davinci-002",
+        "model": "text-davinci-003",
         "prompt": prompt,
-        "temperature": 0,
-        "max_tokens": 100,
+        "temperature": 1,
+        "max_tokens": 256,
       };
       // Post Api Url
       var url = Uri.parse('https://api.openai.com/v1/completions');
@@ -55,13 +57,15 @@ class _ChatScreenState extends State<ChatScreen> {
       var response = await http.post(url,
           headers: {
             "Content-Type": "application/json",
-            "Authorization": "Bearer $apiKey"
+            "Authorization": "Bearer $apiKey",
+            "OpenAI-Organization": "$org",
           },
           body: json.encode(requestBody)); // post call
       // Checked we get the response or not
       // if status code is 200 then Api Call is Successfully Executed
       if (response.statusCode == 200) {
         var responseJson = json.decode(response.body);
+        print('Response AI : ${responseJson}');
         return responseJson["choices"][0]["text"];
       } else {
         return "Failed to generate text: ${response.body}";
